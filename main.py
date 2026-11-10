@@ -1,13 +1,27 @@
 from direct.showbase.ShowBase import ShowBase
 from direct.gui.OnscreenImage import OnscreenImage
 from panda3d.core import TransparencyAttrib
+from panda3d.core import DirectionalLight
+from panda3d.core import AmbientLight
 
 class Game(ShowBase):
     def __init__(self):
         ShowBase.__init__(self)
+        self.disableMouse()
         self.load_models()
+        self.Lighting()
         self.make_world()
         self.crosshair()
+        self.Camera()
+        self.button = {
+            "forward": False,
+            "backward": False,
+            "left": False,
+            "right": False,
+            "up": False,
+            "down": False
+        }
+        self.control()
 
     def load_models(self):
         self.grass = self.loader.loadModel("grass-block.glb")
@@ -41,6 +55,55 @@ class Game(ShowBase):
         c = OnscreenImage(image="Crosshair.png", pos=(0, 0, 0), scale=0.05)
         c.setTransparency(TransparencyAttrib.MAlpha)
 
+    def Lighting(self):
+        sun = DirectionalLight("sun")
+        sun.setColor((0.8, 0.8, 0.8, 1))
+        sun_node = self.render.attachNewNode(sun)
+        sun_node.setHpr(-45, -45, 0)
+        self.render.setLight(sun_node)
+        
+        ambient = AmbientLight("ambient")
+        ambient.setColor((0.4, 0.4, 0.4, 1))
+        ambient_node = self.render.attachNewNode(ambient)
+        self.render.setLight(ambient_node)
 
+    def Camera(self):
+        self.camLens.setFov(75)
+
+    def update(self, task):
+        dt = globalClock.getDt()
+        speed = 14.0
+
+        if self.button["forward"]:
+            self.camera.setY(self.camera, speed * dt)
+        if self.button["backward"]:
+            self.camera.setY(self.camera, -speed * dt)
+        if self.button["left"]:
+            self.camera.setX(self.camera, -speed * dt)
+        if self.button["right"]:
+            self.camera.setX(self.camera, speed * dt)
+        if self.button["up"]:
+            self.camera.setZ(self.camera, speed * dt)
+        if self.button["down"]:
+            self.camera.setZ(self.camera, -speed * dt)
+        return task.cont if task else None
+
+    def set_button(self, action, value):
+        self.button[action] = value
+
+    def control(self):
+        mapping = {
+            "w": "forward",
+            "s": "backward",
+            "a": "left",
+            "d": "right",
+            "space": "up",
+            "shift": "down"
+        }
+        for key, action in mapping.items():
+            self.accept(key, self.set_button, [action, True])
+            self.accept(f"{key}-up", self.set_button, [action, False])
+
+    
 game = Game()
 game.run()
