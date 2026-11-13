@@ -8,6 +8,7 @@ class Game(ShowBase):
     def __init__(self):
         ShowBase.__init__(self)
         self.disableMouse()
+        self.mouse_locked = False
         self.load_models()
         self.Lighting()
         self.make_world()
@@ -22,6 +23,8 @@ class Game(ShowBase):
             "down": False
         }
         self.control()
+        self.lock_mouse()
+        self.taskMgr.add(self.update, "update")
 
     def load_models(self):
         self.grass = self.loader.loadModel("grass-block.glb")
@@ -86,7 +89,20 @@ class Game(ShowBase):
             self.camera.setZ(self.camera, speed * dt)
         if self.button["down"]:
             self.camera.setZ(self.camera, -speed * dt)
+        if self.mouse_locked and self.mouseWatcherNode and self.mouseWatcherNode.hasMouse():
+            md = self.win.getPointer(0)
+            cx = self.win.getXSize() // 2
+            cy = self.win.getYSize() // 2
+            dx = md.getX() - cx
+            dy = md.getY() - cy
+
+            sensitivity = 0.15
+            self.camera.setH(self.camera.getH() - dx * sensitivity)
+            self.camera.setP(self.camera.getP() - dy * sensitivity)
+            self.camera.setP(max(85, max(-85, self.camera.getP())))
+            self.win.movePointer(0, cx, cy)
         return task.cont if task else None
+
 
     def set_button(self, action, value):
         self.button[action] = value
@@ -103,6 +119,33 @@ class Game(ShowBase):
         for key, action in mapping.items():
             self.accept(key, self.set_button, [action, True])
             self.accept(f"{key}-up", self.set_button, [action, False])
+            self.accept("escape", self.toggle_mouse)
+    def lock_mouse(self):
+        if hasattr(self.win, "requestProperties"):
+            props = self.win.getProperties()
+            props.setCursorHidden(True)
+            self.win.requestProperties(props)
+        self.mouse_locked = True
+
+    def unlock_mouse(self):
+        if hasattr(self.win, "requestProperties"):
+            props = self.win.getProperties()
+            props.setCursorHidden(False)
+            self.win.requestProperties(props)
+        self.mouse_locked = False
+
+    def toggle_mouse(self):
+        if self.mouse_locked:
+            self.unlock_mouse()
+        else:
+            self.lock_mouse()
+
+    def change_mouse_status(self, action, active):
+        self.press[action] = active
+        
+
+
+    
 
     
 game = Game()
