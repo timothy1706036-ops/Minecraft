@@ -129,6 +129,7 @@ class Game(ShowBase):
             self.accept("escape", self.toggle_mouse)
 
         self.accept('mouse1', self.break_block)
+        self.accept('mouse3', self.place_block)
     def lock_mouse(self):
         if hasattr(self.win, "requestProperties"):
             props = WindowProperties()
@@ -171,6 +172,17 @@ class Game(ShowBase):
             if block and self.camera.getDistance(block) < 14:
                 block.removeNode()
                 print("Block broken!")
+
+    def place_block(self):
+        if self.rayQueue.getNumEntries() > 0:
+            self.rayQueue.sortEntries()
+            entry = self.rayQueue.getEntry(0)
+            block = entry.getIntoNodePath().getPythonTag("owner")
+
+            if block and self.camera.getDistance(block) < 14:
+                normal = entry.getSurfaceNormal(self.render)
+                position = block.getPos() + normal * 2
+                self.make_block("grass", position)
         
 
 
