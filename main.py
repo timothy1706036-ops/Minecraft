@@ -49,9 +49,10 @@ class Game(ShowBase):
             raise ValueError(f"Unknown block type: {block_type}")
 
         solid = block.attachNewNode(CollisionNode("block"))
-        solid.node().addSolid(CollisionBox((0, 0, 0), 0.5, 0.5, 0.5))
+        solid.node().addSolid(CollisionBox((0, 0, 0), 1, 1, 1))
         solid.setPythonTag("owner", block)
         block.setPos(position)
+        block.setScale(0.5)
         return block
 
     def make_world(self):
@@ -105,7 +106,7 @@ class Game(ShowBase):
             sensitivity = 0.15
             self.camera.setH(self.camera.getH() - dx * sensitivity)
             self.camera.setP(self.camera.getP() - dy * sensitivity)
-            self.camera.setP(max(85, max(-85, self.camera.getP())))
+            self.camera.setP(min(85, max(-85, self.camera.getP())))
             self.win.movePointer(0, cx, cy)
             self.ctrav.traverse(self.render)
         return task.cont if task else None
