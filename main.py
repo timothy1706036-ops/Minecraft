@@ -16,6 +16,7 @@ class Game(ShowBase):
         self.make_world()
         self.crosshair()
         self.Camera()
+        self.setup_raycast()
         self.button = {
             "forward": False,
             "backward": False,
@@ -47,6 +48,9 @@ class Game(ShowBase):
         else:
             raise ValueError(f"Unknown block type: {block_type}")
 
+        solid = block.attachNewNode(CollisionNode("block"))
+        solid.node().addSolid(CollisionBox((0, 0, 0), 0.5, 0.5, 0.5))
+        solid.setPythonTag("owner", block)
         block.setPos(position)
         return block
 
@@ -103,6 +107,7 @@ class Game(ShowBase):
             self.camera.setP(self.camera.getP() - dy * sensitivity)
             self.camera.setP(max(85, max(-85, self.camera.getP())))
             self.win.movePointer(0, cx, cy)
+            self.ctrav.traverse(self.render)
         return task.cont if task else None
 
 
@@ -122,6 +127,8 @@ class Game(ShowBase):
             self.accept(key, self.set_button, [action, True])
             self.accept(f"{key}-up", self.set_button, [action, False])
             self.accept("escape", self.toggle_mouse)
+
+        self.accept('mouse1', self.break_block)
     def lock_mouse(self):
         if hasattr(self.win, "requestProperties"):
             props = WindowProperties()
@@ -152,7 +159,8 @@ class Game(ShowBase):
         light = CollisionRay(0, 0, 0, 0, 1, 0)
         light_node = CollisionNode("lightRay")
         light_node.addSolid(light)
-        Light_path = self.camera.attachNewNode(light_node)
+        light_path = self.camera.attachNewNode(light_node)
+        self.ctrav.addCollider(light_path, self.rayQueue)
 
     def break_block(self):
         if self.rayQueue.getNumEntries() > 0:
