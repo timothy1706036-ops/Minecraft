@@ -3,6 +3,8 @@ from direct.gui.OnscreenImage import OnscreenImage
 from panda3d.core import TransparencyAttrib
 from panda3d.core import DirectionalLight
 from panda3d.core import AmbientLight
+from panda3d.core import WindowProperties
+from panda3d.core import CollisionTraverser, CollisionHandlerQueue, CollisionNode, CollisionRay, CollisionBox
 
 class Game(ShowBase):
     def __init__(self):
@@ -122,14 +124,14 @@ class Game(ShowBase):
             self.accept("escape", self.toggle_mouse)
     def lock_mouse(self):
         if hasattr(self.win, "requestProperties"):
-            props = self.win.getProperties()
+            props = WindowProperties()
             props.setCursorHidden(True)
             self.win.requestProperties(props)
         self.mouse_locked = True
 
     def unlock_mouse(self):
         if hasattr(self.win, "requestProperties"):
-            props = self.win.getProperties()
+            props = WindowProperties()
             props.setCursorHidden(False)
             self.win.requestProperties(props)
         self.mouse_locked = False
@@ -142,6 +144,25 @@ class Game(ShowBase):
 
     def change_mouse_status(self, action, active):
         self.press[action] = active
+
+    def setup_raycast(self):
+        self.ctrav = CollisionTraverser()
+        self.rayQueue = CollisionHandlerQueue()
+
+        light = CollisionRay(0, 0, 0, 0, 1, 0)
+        light_node = CollisionNode("lightRay")
+        light_node.addSolid(light)
+        Light_path = self.camera.attachNewNode(light_node)
+
+    def break_block(self):
+        if self.rayQueue.getNumEntries() > 0:
+            self.rayQueue.sortEntries()
+            entry = self.rayQueue.getEntry(0)
+            block = entry.getIntoNodePath().getPythonTag("owner")
+
+            if block and self.camera.getDistance(block) < 14:
+                block.removeNode()
+                print("Block broken!")
         
 
 
