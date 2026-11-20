@@ -11,6 +11,9 @@ class Game(ShowBase):
         ShowBase.__init__(self)
         self.disableMouse()
         self.mouse_locked = False
+        self.data_block = ['grass', 'dirt', 'stone', 'sand']
+        self.block_choosed = 'grass'
+        self.model_block = {}
         self.load_models()
         self.Lighting()
         self.make_world()
@@ -28,23 +31,24 @@ class Game(ShowBase):
         self.control()
         self.lock_mouse()
         self.taskMgr.add(self.update, "update")
+        
 
     def load_models(self):
-        self.grass = self.loader.loadModel("grass-block.glb")
-        self.grass.setHpr(0, 90, 0)
-        self.dirt = self.loader.loadModel("dirt-block.glb")
-        self.sand = self.loader.loadModel("sand-block.glb")
-        self.stone = self.loader.loadModel("stone-block.glb")
+        self.model_block['grass'] = self.loader.loadModel("grass-block.glb")
+        self.model_block['grass'].setHpr(0, 90, 0)
+        self.model_block['dirt'] = self.loader.loadModel("dirt-block.glb")
+        self.model_block['sand'] = self.loader.loadModel("sand-block.glb")
+        self.model_block['stone'] = self.loader.loadModel("stone-block.glb")
 
     def make_block(self, block_type, position):
         if block_type == "grass":
-            block = self.grass.copyTo(self.render)
+            block = self.model_block['grass'].copyTo(self.render)
         elif block_type == "dirt":
-            block = self.dirt.copyTo(self.render)
+            block = self.model_block['dirt'].copyTo(self.render)
         elif block_type == "sand":
-            block = self.sand.copyTo(self.render)
+            block = self.model_block['sand'].copyTo(self.render)
         elif block_type == "stone":
-            block = self.stone.copyTo(self.render)
+            block = self.model_block['stone'].copyTo(self.render)
         else:
             raise ValueError(f"Unknown block type: {block_type}")
 
@@ -131,6 +135,10 @@ class Game(ShowBase):
 
         self.accept('mouse1', self.break_block)
         self.accept('mouse3', self.place_block)
+        self.accept('1', self.change_block, ['grass'])
+        self.accept('2', self.change_block, ['dirt'])
+        self.accept('3', self.change_block, ['stone'])
+        self.accept('4', self.change_block, ['sand'])
     def lock_mouse(self):
         if hasattr(self.win, "requestProperties"):
             props = WindowProperties()
@@ -184,8 +192,10 @@ class Game(ShowBase):
                 normal = entry.getSurfaceNormal(self.render)
                 position = block.getPos() + normal * 2
                 self.make_block("grass", position)
-        
 
+
+    def change_block(self, type):
+        self.block_choosed = type
 
     
 
